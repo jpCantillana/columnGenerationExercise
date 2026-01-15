@@ -14,14 +14,18 @@ private:
     std::vector<double> coeffs_;       // Store coefficients
     
 public:
-    // Constructor: creates linear constraint sum(coeff_i * var_i) ∈ [lhs, rhs]
+    // Constructor 1: For normal constraints with variables
     ScipConstraint(SCIP* scip, const std::string& name,
                    const std::vector<ScipVariable*>& variables,
                    const std::vector<double>& coefficients,
                    double lhs, double rhs);
     
-    ~ScipConstraint();
+    // Constructor 2: For empty constraints (column generation)
+    ScipConstraint(SCIP* scip, const std::string& name,
+                   double lhs, double rhs);
     
+    ~ScipConstraint();
+                   
     // No copying (constraints can't be copied in SCIP)
     ScipConstraint(const ScipConstraint&) = delete;
     ScipConstraint& operator=(const ScipConstraint&) = delete;

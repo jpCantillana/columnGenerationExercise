@@ -16,10 +16,6 @@ ScipConstraint::ScipConstraint(SCIP* scip, const std::string& name,
     if (variables.size() != coefficients.size()) {
         throw std::runtime_error("Variables and coefficients size mismatch");
     }
-    if (variables.empty()) {
-        throw std::runtime_error("Constraint must have at least one variable");
-    }
-
     
     // 2. Convert ScipVariable* to SCIP_VAR* and store
     vars_.reserve(variables.size());
@@ -27,15 +23,35 @@ ScipConstraint::ScipConstraint(SCIP* scip, const std::string& name,
         if (var == nullptr) {
             throw std::runtime_error("Null variable pointer in constraint");
         }
-        vars_.push_back(var->get());  // Use -> operator to get raw pointer
+        vars_.push_back(var->get());
     }
     
-    // 4. Create constraint in SCIP
-    SCIP_CALL_EXCEPT(SCIPcreateConsBasicLinear(scip_, &cons_, name.c_str(),
-                     vars_.size(), vars_.data(), coeffs_.data(),
-                     lhs, rhs));
+    // 3. Create constraint
+    if (vars_.empty()) {
+        // Empty constraint
+        SCIP_CALL_EXCEPT(SCIPcreateConsBasicLinear(scip_, &cons_, name.c_str(),
+                         0, nullptr, nullptr, lhs, rhs));
+    } else {
+        // Constraint with variables
+        SCIP_CALL_EXCEPT(SCIPcreateConsBasicLinear(scip_, &cons_, name.c_str(),
+                         vars_.size(), vars_.data(), coeffs_.data(),
+                         lhs, rhs));
+    }
     
-    // 5. Add to problem
+    // 4. Add to problem
+    SCIP_CALL_EXCEPT(SCIPaddCons(scip_, cons_));
+}
+
+// NEW: Constructor for empty constraints
+ScipConstraint::ScipConstraint(SCIP* scip, const std::string& name,
+                               double lhs, double rhs)
+    : scip_(scip), cons_(nullptr) {
+    
+    // Create empty constraint
+    SCIP_CALL_EXCEPT(SCIPcreateConsBasicLinear(scip_, &cons_, name.c_str(),
+                     0, nullptr, nullptr, lhs, rhs));
+    
+    // Add to problem
     SCIP_CALL_EXCEPT(SCIPaddCons(scip_, cons_));
 }
 
